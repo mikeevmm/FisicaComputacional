@@ -2,6 +2,7 @@
 
 import argparse
 import random
+import itertools
 
 # ********** PARAMETERS
 
@@ -41,8 +42,8 @@ class Player:
     def __init__(self):
         self.plays = []
     
-    def register_play(self, row_index, pins_before_removal, removed):
-        play = (row_index, pins_before_removal, removed)
+    def register_play(self, board_configuration, row_played, removal_count):
+        play = (board_configuration, (row_played, removal_count))
         self.plays.append(play)
     
     def get_plays(self):
@@ -50,19 +51,21 @@ class Player:
 
 # ********** CONTENTS
 
-# (row index, pins in that row, pin removal count)
+# board configuration in (row_1_pins, row_2_pins, ...) -> 
+#   -> play in format (row, pins_removed) ->
+#       -> statistical score
 statistics = {}
-for row in range(ROW_COUNT):                                        # For each row...
-    row_pin_count = MIN_PIN_COUNT + row                             # ... which has `row_pin_count` pins...
-    for possible_pin_count in range(1, row_pin_count + 1):          # ... for each possible number of pins remaining ...
-        for pin_remove_count in range(1, possible_pin_count + 1):   # ... for each pin removal count ...
-            key = (row, possible_pin_count, pin_remove_count)       # ... initialize score to 0
-            value = 0
-            statistics[key] = value
+for configuration in itertools.product(*(range(0, MIN_PIN_COUNT+row+1) for row in range(ROW_COUNT))):
+    
+    statistics[configuration] = {}
+
+    for row in range(ROW_COUNT):
+        for pins_removed in range(1, configuration[row] + 1):
+            statistics[configuration][(row, pins_removed)] = 0
+
 
 for trial in range(TRIALS):
-
-    # rows = [Row(3), Row(4), Row(5)]
+    # rows = [Row(3), Row(4), Row(5), ...]
     rows = list(Row(MIN_PIN_COUNT + i) for i in range(ROW_COUNT))
 
     def total_pins():
@@ -83,20 +86,24 @@ for trial in range(TRIALS):
         current_player = players[current_player_index]
 
         # Find the available choices
-        available_choices = list( filter( lambda choice: rows[choice[0]].get_pins() == choice[1] , statistics ) )
+        current_board_config = tuple(row.get_pins() for row in rows)
+        available_choices = list(statistics[current_board_config].keys())
 
         # Find the best choices
-        best_choice_value = statistics[ max(available_choices, key = lambda choice: statistics[choice]) ]
-        best_choices = list( filter( lambda choice: statistics[choice] == best_choice_value , available_choices ) )
+        def get_score_of (choice):
+            return statistics[current_board_config][choice]
+        
+        best_choice_value = get_score_of( max(available_choices, key= lambda choice: get_score_of(choice)) )
+        best_choices = tuple ( filter(lambda choice: get_score_of(choice) == best_choice_value, available_choices) )
 
         # Choose an action
         # (row to remove from, number of pins in that row, how many pins to remove)
         play = random.choice(best_choices)
         row_to_remove_from = play[0]
-        pins_to_remove = play[2]
+        pins_to_remove = play[1]
 
         # Do and register stuff
-        current_player.register_play(row_to_remove_from, rows[row_to_remove_from].get_pins(), pins_to_remove)
+        current_player.register_play(tuple(row.get_pins() for row in rows), row_to_remove_from, pins_to_remove)
         rows[row_to_remove_from].take(pins_to_remove)
     
     # Game over, update statistics
@@ -104,51 +111,31 @@ for trial in range(TRIALS):
     lost = filter(lambda player: player != won, players)
 
     for winning_play in won.get_plays():
-        statistics[winning_play] += PLAYER_COUNT - 1
+        board_config = winning_play[0]
+        play = winning_play[1]
+        statistics[board_config][play] += PLAYER_COUNT - 1
     
     for losing_player in lost:
         for losing_play in losing_player.get_plays():
-            statistics[losing_play] -= 1
+            board_config = winning_play[0]
+            play = winning_play[1]
+            statistics[board_config][play] -= 1
 
 # Print final statistics
-print("""
 
-Game board:
+print("Board configuration:  (pins in row1,  pins in row2,  pins in row3, ...)")
+print("Best plays: (from row I, remove X pins), ...")
 
--------------------------
-|                       |
-|       X X X           |
-|                       |
-|       X X X X         |
-|                       |
-|       X X X X X       |
-|                       |
--------------------------
+for configuration in statistics:
+    # Find all best plays
+    def get_score_of(play):
+        return statistics[configuration][play]
+    
+    if len(statistics[configuration]) == 0:
+        continue
 
-Pins are removed right to left.
+    best_play_score = get_score_of( max(statistics[configuration], key=get_score_of) )
+    best_plays = tuple( filter(lambda play: get_score_of(play) == best_play_score, statistics[configuration]) )
 
-X = Optimal number of pins to remove from this position
-    ( - means no good choice)
-    ( (x,y) means any is good)
-""")
-
-output = ''
-for row in range(0, ROW_COUNT):
-    output += '\t'
-    row_pin_count = MIN_PIN_COUNT + row
-    for possible_pin_count in range(1, row_pin_count + 1):
-        possible_plays = list((row, possible_pin_count, pin_removal_count) for pin_removal_count in range(1, possible_pin_count + 1))
-        best_play_score = statistics[max(possible_plays, key=lambda x: statistics[x])]
-        
-        if best_play_score < 0:
-            output += '-'
-        else:
-            best_plays = list( filter(lambda play: statistics[play] == best_play_score, possible_plays) )
-            if len(best_plays) == 1:
-                output += str(best_plays[0][2])
-            else:
-                output += str(tuple(play[2] for play in best_plays))
-        output += '\t\t'
-    output += '\n\n'
-
-print(output)
+    print("Board configuration: " + str(configuration))
+    print("Best plays: " + " ".join(map(lambda x: str(x), best_plays)))

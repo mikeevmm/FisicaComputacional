@@ -45,7 +45,7 @@ def simpson_approximation_generator (f : FunctionType, a : float, b : float, N :
     a,b = min(a,b),max(a,b)
     h = (b-a)/N
     P = 10
-    for i in range(0, N, 2):
+    for i in range(1, N+1, 2):
         x = a+i*h
         
         x1, y1 = x-h, f(x-h)
@@ -56,7 +56,7 @@ def simpson_approximation_generator (f : FunctionType, a : float, b : float, N :
         C = (x2**2*(x3*y1-x1*y3)+x2*(x1**2*y3-x3**2*y1)+x1*x3*(x3-x1)*y2)/(((x1-x2)*(x1-x3)*(x2-x3)))
 
         for n in range(P):
-            xx = x + (-1+n/P*2)*h/2
+            xx = x1 + (x3 - x1)/P*n
             yield (
                 xx,
                 A*xx**2 + B*xx + C
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     nice = None
 
     for i in range(1, STEPS + 1):
-        xvalues[i - 1] = log(i)
+        xvalues[i - 1] = log(2/i)
         yvalues[i - 1] = integrate_simpson(f, -1, 1, i)
         if nice is None and abs(yvalues[i-1]*2 - pi) < 1E-6:
             nice = i

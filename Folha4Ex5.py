@@ -73,6 +73,9 @@ for trial in range(TRIALS):
 
     def next_player(current_player, total_players):
         return (current_player + 1)%total_players
+    
+    def prev_player(current_player, total_players):
+        return (current_player-1)%total_players
 
     players = []
     for i in range(PLAYER_COUNT):
@@ -107,7 +110,7 @@ for trial in range(TRIALS):
         rows[row_to_remove_from].take(pins_to_remove)
     
     # Game over, update statistics
-    won = current_player
+    won = players[prev_player(current_player_index, PLAYER_COUNT)]
     lost = filter(lambda player: player != won, players)
 
     for winning_play in won.get_plays():

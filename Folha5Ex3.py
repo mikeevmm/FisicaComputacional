@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from math import inf
+
 def get_spline_interpolation (data):
     # Find coefficients
     n = len(data) - 1
@@ -30,10 +32,12 @@ def get_spline_interpolation (data):
         c3.append(m[i]/2)
         c4.append((m[i+1]-m[i])/(6*h[i]))
     # Return function
-    segments = tuple((data[x][0], data[x+1][0]) for x in range(n - 1))
+    segments = tuple([data[x][0], data[x+1][0]] for x in range(n - 1))
+    segments[0][0] = -inf
+    segments[-1][1] = +inf
     def interpolated(x):
         for i in range(len(segments)):
-            k = i            
+            k = i
             if x >= segments[i][0] and x < segments[i][1]:
                 break
         return c1[k] + (x - data[k][0]) * (c2[k] + (x - data[k][0]) * (c3[k] + (x - data[k][0])*c4[k]))

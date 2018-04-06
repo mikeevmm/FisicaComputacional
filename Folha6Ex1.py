@@ -206,3 +206,9 @@ if __name__ == '__main__':
     result = matrix_mult(coef_matrix, solution)
     print('COEFFICIENT MATRIX X SOLUTION VECTOR')
     print(pprint_matrix(result))
+
+    print('''
+    We can see that the method does not work for this
+    particular system --- this is probably due to
+    numerical errors in using an irrational number.
+    ''')

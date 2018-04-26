@@ -131,18 +131,35 @@ class ErrorValue:
         base_err = '{:f}'.format(self.error*10**(-value_expnt)) # Force non sci
         base_value = '{:f}'.format(self.value/10**(-value_expnt)) # ""
         decimals = 0
+        # usual error string
         while len(set(base_err[:decimals+1]) - set('0.')) == 0:
             decimals += 1
         str_error = base_err[decimals]
+        # 1 case
         if base_err[decimals] == '1' and len(base_err) > decimals and base_err[decimals + 1] != '.':
             str_error += base_err[decimals + 1]
             decimals += 1
         str_value = base_value[:decimals + 1]
+        # round up if needed
+        if len(base_err) > decimals + 1:
+            if base_err[decimals + 1] == '.':
+                if len(base_err) > decimals + 2:
+                    if int(base_err[decimals + 2]) > 5:
+                        str_error = str_error[:-1] + str(int(str_error[-1]) + 1)
+            else:
+                if int(base_err[decimals + 1]) > 5:
+                    str_error = str_error[:-1] + str(int(str_error[-1]) + 1)
+        # We don't need to check for rounding @ last digit of
+        #  of value, because error is at least 1 @ that position.
+        # Add extra zeros if needed
         if decimals + 1 > len(str_value):
             str_value += '0'*(len(str_value) + 1 - decimals)
         return '{}({}){}'.format(str_value, str_error, 'E' + str(value_expnt) if value_expnt != 0 else '')
 
 if __name__ == '__main__':
+    print(ErrorValue(2,1.9))
+    exit()
+
     a = ErrorValue(1, 0.012)
     b = ErrorValue(40, 20)
 

@@ -157,9 +157,10 @@ class ErrorValue:
         return '{}({}){}'.format(str_value, str_error, 'E' + str(value_expnt) if value_expnt != 0 else '')
 
 if __name__ == '__main__':
+    # Rounding test
     print(ErrorValue(2,1.9))
-    exit()
-
+    
+    # Ops test
     a = ErrorValue(1, 0.012)
     b = ErrorValue(40, 20)
 

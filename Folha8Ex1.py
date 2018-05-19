@@ -106,7 +106,7 @@ class ErrorValue:
             return ErrorValue(pow_result, sqrt((other.value*self.value**(other.value-1)*self.error)**2+(pow_result*log(self.value)*other.error)**2))
         # else
         if isinstance(other, Number):
-            return ErrorValue(self.value**other, self.error)
+            return ErrorValue(self.value**other, abs(other*self.value**(other-1)*self.error))
         raise ValueError('Cannot raise ErrorValue to non numeric.')
 
     def __rpow__(self, other):

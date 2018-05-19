@@ -41,10 +41,7 @@ class ErrorValue:
             return True
         # else
         if isinstance(other, Number):
-            if abs(other - self.interval[0]) <= self.error*2:
-                return True
-            # else
-            return False
+            return ErrorValue(other, 0) == self
         raise ValueError('Cannot compare ErrorValue with non numeric.')
 
     def __radd__(self, other):
@@ -129,7 +126,7 @@ class ErrorValue:
             return '0({}){}'.format(str_error, 'E' + str(err_expnt) if err_expnt != 0 else '')
         value_expnt = floor(log10(self.value))
         base_err = '{:f}'.format(self.error*10**(-value_expnt)) # Force non sci
-        base_value = '{:f}'.format(self.value/10**(-value_expnt)) # ""
+        base_value = '{:f}'.format(self.value*10**(-value_expnt)) # ""
         decimals = 0
         # usual error string
         while len(set(base_err[:decimals+1]) - set('0.')) == 0:

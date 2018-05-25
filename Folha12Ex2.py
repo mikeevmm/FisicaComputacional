@@ -29,7 +29,7 @@ if __name__ == '__main__':
     import threading
 
     THROWS = 1000
-    RUNS = 1000
+    RUNS = 10000
     TOTAL = THROWS*RUNS
 
     points = np.zeros((THROWS, 2))
@@ -50,9 +50,10 @@ if __name__ == '__main__':
     for throws in range(THROWS):
         t = threading.Thread(target=run, args=(throws,))
         threads.append(t)
-        t.run()
+        t.start()
     
     for t in threads:
+        print('Done')
         t.join()
 
     plt.plot(np.arange(THROWS), points, 'o')
